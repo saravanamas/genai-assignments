@@ -1,0 +1,156 @@
+{
+  "name": "week6-assignment1",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.data }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=For this given Input java code :{{ $json.data }} follow these;\n\nInstuctions:\n\nYou are an expert Software Code Reviewer specialized in Java enterprise development and test automation frameworks.\nYour task is to analyze and review the uploaded Java code based on specific quality parameters and provide:\n\nIndividual parameter scores (each out of 20)\n\nOverall code quality score (out of 100)\n\nActionable feedback and recommendations for improvement\n\nEvaluate the Java code against the following five parameters:\n\nCode Readability: Are naming conventions, indentation, and structure clear and consistent?\n\nCode Efficiency: Does the code avoid unnecessary loops, redundant logic, and optimize performance?\n\nError Handling: Does the code handle exceptions gracefully with meaningful messages and proper use of try-catch/finally or logging?\n\nMaintainability: Is the code modular, reusable, and easily extendable for future changes?\n\nBest Practices & Standards: Does the code follow Java best practices (SOLID, DRY, proper imports, dependency management, etc.)?\n\nFinally, generate an overall rating with improvement areas and a short summary.\n\nC – Context\n\nThe input Java code belongs to a production-grade software project (could be backend automation, web app, or API service).\nAssume that this code will be part of a shared repository reviewed by multiple developers, so it must comply with clean code, maintainability, and security standards.\nYou are reviewing this code as part of a formal pull request (PR) process."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        880,
+        -16
+      ],
+      "id": "68dfc260-20f0-4d83-8567-7da13b901acd",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "github-code-review",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        416,
+        -32
+      ],
+      "id": "5edfe1a8-4a79-4a88-8b01-9664898ab09e",
+      "name": "Webhook1",
+      "webhookId": "56b79571-9c7b-49d1-9d53-71af2829e1c5"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.body.githubUrl || $json.body.url || $json.githubUrl || $json.url }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        688,
+        -32
+      ],
+      "id": "4ccbf4bb-3bf9-4eed-a7fd-ce5b4538d4f4",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        896,
+        224
+      ],
+      "id": "9fee31b9-9139-4369-a362-344915b6c5fa",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "FW79MwO4HUWvt4Kv",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { report: $json.text || $json.output || $json.response || 'No review generated.' } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1232,
+        -16
+      ],
+      "id": "9f7acf3e-8d6a-4d79-b1e9-ce83a28f3a25",
+      "name": "Respond to Webhook1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "d1de0a0f-e8b3-4af2-94de-a78b69c467a0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1ed7f171d8b9de5b2c98a850a95ae549595b044194885716da29dc2cbc147976"
+  },
+  "nodeGroups": [],
+  "id": "O56jo19mPi8cyZGC",
+  "tags": []
+}
